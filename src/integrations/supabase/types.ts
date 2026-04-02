@@ -14,7 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string
+          preferred_language: string | null
+          total_audio_minutes: number | null
+          total_transcriptions: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          preferred_language?: string | null
+          total_audio_minutes?: number | null
+          total_transcriptions?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          preferred_language?: string | null
+          total_audio_minutes?: number | null
+          total_transcriptions?: number | null
+        }
+        Relationships: []
+      }
+      transcriptions: {
+        Row: {
+          audio_url: string | null
+          content: string
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          language: string
+          noise_cleaned: boolean | null
+          source: string | null
+          title: string | null
+          user_id: string
+          word_count: number | null
+        }
+        Insert: {
+          audio_url?: string | null
+          content: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          language: string
+          noise_cleaned?: boolean | null
+          source?: string | null
+          title?: string | null
+          user_id: string
+          word_count?: number | null
+        }
+        Update: {
+          audio_url?: string | null
+          content?: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          language?: string
+          noise_cleaned?: boolean | null
+          source?: string | null
+          title?: string | null
+          user_id?: string
+          word_count?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
