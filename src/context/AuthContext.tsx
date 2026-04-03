@@ -61,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
       setLoading(false);
+    }).catch(() => {
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
