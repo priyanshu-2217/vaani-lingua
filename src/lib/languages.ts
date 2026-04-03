@@ -5,6 +5,7 @@ export interface Language {
 }
 
 export const INDIAN_LANGUAGES: Language[] = [
+  { name: "English", code: "en-IN", nativeName: "English" },
   { name: "Hindi", code: "hi-IN", nativeName: "हिन्दी" },
   { name: "Bengali", code: "bn-IN", nativeName: "বাংলা" },
   { name: "Tamil", code: "ta-IN", nativeName: "தமிழ்" },

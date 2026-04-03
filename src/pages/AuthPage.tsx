@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { INDIAN_LANGUAGES } from "@/lib/languages";
 import { toast } from "sonner";
-import { Mic, Loader2 } from "lucide-react";
+import { Mic, Loader2, Mail, CheckCircle } from "lucide-react";
 
 export default function AuthPage() {
   const { user } = useAuth();
@@ -19,11 +19,9 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [language, setLanguage] = useState("Hindi");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [otpSent, setOtpSent] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     if (user) navigate("/dashboard");
@@ -36,7 +34,7 @@ export default function AuthPage() {
     }
   }, [countdown]);
 
-  const sendOtp = async () => {
+  const sendMagicLink = async () => {
     if (!email) return toast.error("Please enter your email");
     if (tab === "signup" && !fullName) return toast.error("Please enter your name");
     setLoading(true);
@@ -45,57 +43,17 @@ export default function AuthPage() {
         email,
         options: {
           data: tab === "signup" ? { full_name: fullName, preferred_language: language } : undefined,
+          emailRedirectTo: window.location.origin + "/dashboard",
         },
       });
       if (error) throw error;
-      setOtpSent(true);
-      setCountdown(45);
-      toast.success("OTP sent to your email ✓");
-      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      setLinkSent(true);
+      setCountdown(60);
+      toast.success("Magic link sent to your email ✓");
     } catch (e: any) {
-      toast.error(e.message || "Failed to send OTP");
+      toast.error(e.message || "Failed to send link");
     }
     setLoading(false);
-  };
-
-  const verifyOtp = async () => {
-    const token = otp.join("");
-    if (token.length !== 6) return toast.error("Please enter the full OTP");
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
-      if (error) throw error;
-
-      if (tab === "signup") {
-        const { data: { user: u } } = await supabase.auth.getUser();
-        if (u) {
-          await supabase.from("profiles").update({
-            full_name: fullName,
-            preferred_language: language,
-          }).eq("id", u.id);
-        }
-      }
-
-      toast.success("Welcome to VaaniScript! 🎉");
-      navigate("/dashboard");
-    } catch (e: any) {
-      toast.error(e.message || "Invalid OTP. Try again.");
-    }
-    setLoading(false);
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-    if (value && index < 5) inputRefs.current[index + 1]?.focus();
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
   };
 
   return (
@@ -108,106 +66,80 @@ export default function AuthPage() {
           <CardTitle className="text-2xl text-foreground">Welcome to VaaniScript</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={tab} onValueChange={(v) => { setTab(v); setOtpSent(false); setOtp(["","","","","",""]); }}>
+          <Tabs value={tab} onValueChange={(v) => { setTab(v); setLinkSent(false); }}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin" className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={otpSent} />
-              </div>
-              {!otpSent ? (
-                <Button className="w-full" onClick={sendOtp} disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Send OTP
-                </Button>
-              ) : (
+              {!linkSent ? (
                 <>
                   <div className="space-y-2">
-                    <Label>Enter OTP</Label>
-                    <div className="flex justify-center gap-2">
-                      {otp.map((d, i) => (
-                        <Input
-                          key={i}
-                          ref={(el) => { inputRefs.current[i] = el; }}
-                          className="h-12 w-12 text-center text-lg font-semibold"
-                          maxLength={1}
-                          value={d}
-                          onChange={(e) => handleOtpChange(i, e.target.value)}
-                          onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                        />
-                      ))}
-                    </div>
+                    <Label>Email</Label>
+                    <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                   </div>
-                  <Button className="w-full" onClick={verifyOtp} disabled={loading}>
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Verify & Sign In
+                  <Button className="w-full" onClick={sendMagicLink} disabled={loading}>
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                    Send Magic Link
                   </Button>
-                  <p className="text-center text-sm text-muted-foreground">
-                    {countdown > 0 ? `Resend OTP in 0:${countdown.toString().padStart(2, "0")}` : (
-                      <button className="text-primary underline" onClick={sendOtp}>Resend OTP</button>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-4 py-6 text-center">
+                  <CheckCircle className="h-12 w-12 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Check your email!</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We sent a magic link to <strong>{email}</strong>. Click the link in your email to sign in.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {countdown > 0 ? `Resend in 0:${countdown.toString().padStart(2, "0")}` : (
+                      <button className="text-primary underline" onClick={sendMagicLink}>Resend magic link</button>
                     )}
                   </p>
-                </>
+                </div>
               )}
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input placeholder="Your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={otpSent} />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={otpSent} />
-              </div>
-              <div className="space-y-2">
-                <Label>Preferred Language</Label>
-                <Select value={language} onValueChange={setLanguage} disabled={otpSent}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {INDIAN_LANGUAGES.map((l) => (
-                      <SelectItem key={l.code} value={l.name}>{l.name} ({l.nativeName})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {!otpSent ? (
-                <Button className="w-full" onClick={sendOtp} disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Send OTP
-                </Button>
-              ) : (
+              {!linkSent ? (
                 <>
                   <div className="space-y-2">
-                    <Label>Enter OTP</Label>
-                    <div className="flex justify-center gap-2">
-                      {otp.map((d, i) => (
-                        <Input
-                          key={i}
-                          ref={(el) => { inputRefs.current[i] = el; }}
-                          className="h-12 w-12 text-center text-lg font-semibold"
-                          maxLength={1}
-                          value={d}
-                          onChange={(e) => handleOtpChange(i, e.target.value)}
-                          onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                        />
-                      ))}
-                    </div>
+                    <Label>Full Name</Label>
+                    <Input placeholder="Your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                   </div>
-                  <Button className="w-full" onClick={verifyOtp} disabled={loading}>
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Verify & Create Account
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Preferred Language</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {INDIAN_LANGUAGES.map((l) => (
+                          <SelectItem key={l.code} value={l.name}>{l.name} ({l.nativeName})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" onClick={sendMagicLink} disabled={loading}>
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                    Send Magic Link
                   </Button>
-                  <p className="text-center text-sm text-muted-foreground">
-                    {countdown > 0 ? `Resend OTP in 0:${countdown.toString().padStart(2, "0")}` : (
-                      <button className="text-primary underline" onClick={sendOtp}>Resend OTP</button>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-4 py-6 text-center">
+                  <CheckCircle className="h-12 w-12 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Check your email!</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We sent a magic link to <strong>{email}</strong>. Click the link to create your account.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {countdown > 0 ? `Resend in 0:${countdown.toString().padStart(2, "0")}` : (
+                      <button className="text-primary underline" onClick={sendMagicLink}>Resend magic link</button>
                     )}
                   </p>
-                </>
+                </div>
               )}
             </TabsContent>
           </Tabs>

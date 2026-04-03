@@ -81,13 +81,19 @@ export default function LiveTranscription() {
       language,
       word_count: wordCount,
       duration_seconds: recorder.duration,
-      source: "live" as const,
+      source: "live",
       noise_cleaned: noiseReduction,
     });
 
     if (error) {
-      toast.error("Failed to save transcript");
+      toast.error("Failed to save transcript: " + error.message);
     } else {
+      // Update profile stats
+      const durationMin = recorder.duration / 60;
+      await supabase.from("profiles").update({
+        total_transcriptions: (profile?.total_transcriptions ?? 0) + 1,
+        total_audio_minutes: (profile?.total_audio_minutes ?? 0) + durationMin,
+      }).eq("id", user.id);
       toast.success("Transcript saved! ✓");
     }
   };
