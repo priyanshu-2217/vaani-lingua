@@ -43,7 +43,7 @@ export default function AuthPage() {
         email,
         options: {
           data: tab === "signup" ? { full_name: fullName, preferred_language: language } : undefined,
-          emailRedirectTo: window.location.origin + "/dashboard",
+          emailRedirectTo: window.location.origin + "/auth/callback",
         },
       });
       if (error) throw error;
