@@ -46,7 +46,7 @@ export default function DashboardPage() {
             <CardContent className="flex items-center gap-3 p-4">
               <Mic className="h-8 w-8 text-accent" />
               <div>
-                <p className="text-2xl font-bold text-foreground">13</p>
+                <p className="text-2xl font-bold text-foreground">14</p>
                 <p className="text-xs text-muted-foreground">Languages Available</p>
               </div>
             </CardContent>

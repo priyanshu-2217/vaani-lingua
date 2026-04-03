@@ -99,12 +99,19 @@ export default function FileUpload() {
       language,
       word_count: wordCount,
       duration_seconds: 0,
-      source: "upload" as const,
+      source: "upload",
       noise_cleaned: noiseReduction,
     });
 
-    if (error) toast.error("Failed to save");
-    else toast.success("Saved! ✓");
+    if (error) {
+      toast.error("Failed to save: " + error.message);
+    } else {
+      // Update profile stats
+      await supabase.from("profiles").update({
+        total_transcriptions: (profile?.total_transcriptions ?? 0) + 1,
+      }).eq("id", user.id);
+      toast.success("Saved! ✓");
+    }
   };
 
   const wordCount = transcript.split(/\s+/).filter(Boolean).length;
