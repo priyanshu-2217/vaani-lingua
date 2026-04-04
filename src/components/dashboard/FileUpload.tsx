@@ -62,29 +62,46 @@ export default function FileUpload() {
       await supabase.storage.from("audio-files").upload(path, file);
     }
 
-    setProgress(40);
+    const audioPath = `${user!.id}/${Date.now()}_${file.name}`;
 
-    if (noiseReduction) {
-      setStage("Cleaning noise...");
-      setProgress(55);
-      await new Promise((r) => setTimeout(r, 800));
+    setStage("Uploading audio...");
+    setProgress(30);
+    const { error: uploadError } = await supabase.storage.from("audio-files").upload(audioPath, file);
+    if (uploadError) {
+      toast.error("Upload failed: " + uploadError.message);
+      setIsProcessing(false);
+      return;
     }
 
-    setStage("Transcribing...");
-    setProgress(75);
-    await new Promise((r) => setTimeout(r, 1200));
+    setStage("Transcribing with AI...");
+    setProgress(60);
 
-    setStage("Finalizing...");
-    setProgress(95);
-    await new Promise((r) => setTimeout(r, 500));
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("transcribe-audio", {
+        body: { audioPath, language },
+      });
 
-    // Demo transcript (in production, this comes from API)
-    const demoTranscript = `[Demo Transcription]\n\nThis is a simulated transcription result for the uploaded file "${file.name}".\n\nTo enable real transcription, configure an AssemblyAI or OpenAI Whisper API key.\n\nThe audio file has been uploaded and is ready for processing with a real transcription service.`;
-    setTranscript(demoTranscript);
-    setProgress(100);
-    setStage("Complete!");
-    setIsProcessing(false);
-    toast.success("Transcription complete! ✓");
+      if (fnError) {
+        toast.error("Transcription failed: " + fnError.message);
+        setIsProcessing(false);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        setIsProcessing(false);
+        return;
+      }
+
+      setTranscript(data.transcript);
+      setProgress(100);
+      setStage("Complete!");
+      setIsProcessing(false);
+      toast.success("Transcription complete! ✓");
+    } catch (err: any) {
+      toast.error("Transcription failed: " + (err.message || "Unknown error"));
+      setIsProcessing(false);
+    }
   };
 
   const handleSave = async () => {
