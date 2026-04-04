@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, Mic, Moon, Sun, Menu, X } from "lucide-react";
+import { LogOut, Moon, Sun, Menu, X } from "lucide-react";
 import { useState } from "react";
+import logoImg from "@/assets/logo.png";
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
