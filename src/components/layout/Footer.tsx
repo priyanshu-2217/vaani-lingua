@@ -1,4 +1,4 @@
-import { Mic } from "lucide-react";
+import logoImg from "@/assets/logo.png";
 
 export default function Footer() {
   return (
