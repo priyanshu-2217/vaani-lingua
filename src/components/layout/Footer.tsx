@@ -1,4 +1,4 @@
-import { Mic } from "lucide-react";
+import logoImg from "@/assets/logo.png";
 
 export default function Footer() {
   return (
@@ -6,9 +6,7 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Mic className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <img src={logoImg} alt="VaaniScript logo" className="h-8 w-8 rounded-lg" />
             <span className="text-lg font-bold text-foreground">VaaniScript</span>
           </div>
           <p className="text-sm text-muted-foreground">

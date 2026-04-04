@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, Mic, Moon, Sun, Menu, X } from "lucide-react";
+import { LogOut, Moon, Sun, Menu, X } from "lucide-react";
 import { useState } from "react";
+import logoImg from "@/assets/logo.png";
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
@@ -24,9 +25,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <Mic className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img src={logoImg} alt="VaaniScript logo" className="h-9 w-9 rounded-lg" />
           <span className="text-xl font-bold text-foreground">VaaniScript</span>
         </Link>
 
