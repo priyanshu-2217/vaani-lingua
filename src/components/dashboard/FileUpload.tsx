@@ -49,18 +49,13 @@ export default function FileUpload() {
 
   const handleTranscribe = async () => {
     if (!file) return;
-    setIsProcessing(true);
-
-    // Simulate transcription stages (in production, use AssemblyAI/Whisper API)
-    setStage("Uploading audio...");
-    setProgress(20);
-    await new Promise((r) => setTimeout(r, 1000));
-
-    // Upload to Supabase Storage
-    if (user) {
-      const path = `${user.id}/${Date.now()}_${file.name}`;
-      await supabase.storage.from("audio-files").upload(path, file);
+    if (!file || !user) {
+      toast.error("Please log in to transcribe files.");
+      return;
     }
+    setIsProcessing(true);
+    setProgress(10);
+    setStage("Preparing...");
 
     const audioPath = `${user!.id}/${Date.now()}_${file.name}`;
 
