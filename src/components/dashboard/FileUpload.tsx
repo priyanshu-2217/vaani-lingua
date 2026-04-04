@@ -49,42 +49,54 @@ export default function FileUpload() {
 
   const handleTranscribe = async () => {
     if (!file) return;
+    if (!file || !user) {
+      toast.error("Please log in to transcribe files.");
+      return;
+    }
     setIsProcessing(true);
+    setProgress(10);
+    setStage("Preparing...");
 
-    // Simulate transcription stages (in production, use AssemblyAI/Whisper API)
+    const audioPath = `${user!.id}/${Date.now()}_${file.name}`;
+
     setStage("Uploading audio...");
-    setProgress(20);
-    await new Promise((r) => setTimeout(r, 1000));
-
-    // Upload to Supabase Storage
-    if (user) {
-      const path = `${user.id}/${Date.now()}_${file.name}`;
-      await supabase.storage.from("audio-files").upload(path, file);
+    setProgress(30);
+    const { error: uploadError } = await supabase.storage.from("audio-files").upload(audioPath, file);
+    if (uploadError) {
+      toast.error("Upload failed: " + uploadError.message);
+      setIsProcessing(false);
+      return;
     }
 
-    setProgress(40);
+    setStage("Transcribing with AI...");
+    setProgress(60);
 
-    if (noiseReduction) {
-      setStage("Cleaning noise...");
-      setProgress(55);
-      await new Promise((r) => setTimeout(r, 800));
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("transcribe-audio", {
+        body: { audioPath, language },
+      });
+
+      if (fnError) {
+        toast.error("Transcription failed: " + fnError.message);
+        setIsProcessing(false);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        setIsProcessing(false);
+        return;
+      }
+
+      setTranscript(data.transcript);
+      setProgress(100);
+      setStage("Complete!");
+      setIsProcessing(false);
+      toast.success("Transcription complete! ✓");
+    } catch (err: any) {
+      toast.error("Transcription failed: " + (err.message || "Unknown error"));
+      setIsProcessing(false);
     }
-
-    setStage("Transcribing...");
-    setProgress(75);
-    await new Promise((r) => setTimeout(r, 1200));
-
-    setStage("Finalizing...");
-    setProgress(95);
-    await new Promise((r) => setTimeout(r, 500));
-
-    // Demo transcript (in production, this comes from API)
-    const demoTranscript = `[Demo Transcription]\n\nThis is a simulated transcription result for the uploaded file "${file.name}".\n\nTo enable real transcription, configure an AssemblyAI or OpenAI Whisper API key.\n\nThe audio file has been uploaded and is ready for processing with a real transcription service.`;
-    setTranscript(demoTranscript);
-    setProgress(100);
-    setStage("Complete!");
-    setIsProcessing(false);
-    toast.success("Transcription complete! ✓");
   };
 
   const handleSave = async () => {
